@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="64255f18-8f5c-4aac-ab5e-12f19d98da26" name="RTX-3-ppt">
+        <fileTransfer rootFolder="/data/mh/code" accessType="SFTP" host="172.31.71.187" port="22" sshConfigId="05021086-5c83-455e-903c-e51fd3cd7f7e" sshConfig="rtx3">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
