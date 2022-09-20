@@ -141,7 +141,7 @@ class Dataset(torch.utils.data.Dataset):
             import time
             random.seed(time.time())
             # mask_idx = (self.seq + random.randint(0,self.seq))%len(self.test_mask)
-            mask_idx = random.randint(0,len(self.test_mask))
+            mask_idx = random.randint(0,len(self.test_mask)-1)
             mask = imread(self.test_mask[mask_idx])
             if self.datatype == 1:
                 mask = self.resize(mask, self.input_size//2, self.input_size//2)

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-
+import kornia.filters.laplacian as lineExtracter
 
 # KL Divergence loss used in VAE with an image encoder
 class KLDLoss(nn.Module):
@@ -266,7 +266,19 @@ class MRFLoss(nn.Module):
         for i in range(len(x_vgg)):
             mrf_loss += self.weights[i] * self.mrf_loss(x_vgg[i], y_vgg[i])
         return mrf_loss
-    
+
+class SketchLoss(nn.Module):
+    def __init__(self):
+        super(SketchLoss, self).__init__()
+        self.loss = nn.MSELoss()
+        self.lineE = lineExtracter
+    def forward(self,x,y):
+        line_x = self.lineE(x,5)
+        line_y = self.lineE(y,5)
+
+        l = self.loss(line_x,line_y)
+        l = torch.sum(l)
+        return l
     
 class TVLoss(nn.Module):
     def __init__(self):

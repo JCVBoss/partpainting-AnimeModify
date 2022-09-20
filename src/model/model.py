@@ -4,13 +4,14 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.distributions as tdist
 import torchvision.models as models
+import kornia
 import imp
 
 import numpy as np
 
 from .networks import Generator, MultiscaleDiscriminator, DenseD, Dis_Inn
 # from .vae import VAE
-from .loss import ColorLoss, PerceptualLoss, AdversarialLoss, KLDLoss
+from .loss import ColorLoss, PerceptualLoss, AdversarialLoss, KLDLoss, SketchLoss
 # StyleLoss, FeatureAvgLoss, MRFLoss
 from ..utils import template_match, Adam16
 
@@ -70,6 +71,7 @@ class PartPModel(BaseModel):
         adversarial_loss = AdversarialLoss()
         l1_loss = nn.L1Loss()
         kld_loss = KLDLoss()
+        sketch_loss = SketchLoss()
 
         content_loss = PerceptualLoss()
         
@@ -82,6 +84,7 @@ class PartPModel(BaseModel):
         self.add_module('color_loss', color_loss)
         self.add_module('l1_loss', l1_loss)
         self.add_module('kld_loss', kld_loss)
+        self.add_module('line_loss',sketch_loss)
         
         self.g_optimizer = Adam16(params=g.parameters(), lr=float(config.G_LR), betas=(config.BETA1, config.BETA2), weight_decay=0.0, eps=1e-8)
         self.d_optimizer = Adam16(params=d.parameters(), lr=float(config.D_LR), betas=(config.BETA1, config.BETA2), weight_decay=0.0, eps=1e-8)
@@ -180,6 +183,13 @@ class PartPModel(BaseModel):
         c_loss += g_content_loss
         f_loss += g_sty_loss
 
+        # print(o.shape,data.shape,torch.min(o),torch.max(o),torch.min(data),torch.max(data))
+        # Sketch loss
+        g_line_loss = self.line_loss(o,data)
+        g_line_loss = g_line_loss * self.config.G1_LINE_LOSS_WEIGHT
+        c_loss += g_line_loss
+
+
         g_color_loss = self.color_loss(o, data)
         g_color_loss = g_color_loss * self.config.G1_COLOR_LOSS_WEIGHT
         c_loss += g_color_loss
@@ -197,6 +207,7 @@ class PartPModel(BaseModel):
             ("l_g_adv", g_adv.item()),
             ("l_g_con", g_content_loss.item()),
             ("l_color", g_color_loss.item()),
+            ("l_line", g_line_loss.item()),
             ("l_l1", g_l1_loss.item()),
             ("l_kld", kld_loss.item()),
             ("l_sty", g_sty_loss.item())
