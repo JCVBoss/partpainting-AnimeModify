@@ -10,6 +10,7 @@ import imp
 import numpy as np
 
 from .networks import Generator, MultiscaleDiscriminator, DenseD, Dis_Inn
+# from .PPModule import Generator,MultiscaleDiscriminator,DenseD,Dis_Inn
 # from .vae import VAE
 from .loss import ColorLoss, PerceptualLoss, AdversarialLoss, KLDLoss, SketchLoss
 # StyleLoss, FeatureAvgLoss, MRFLoss
@@ -103,9 +104,14 @@ class PartPModel(BaseModel):
         self.g_optimizer.zero_grad()
         self.d_optimizer.zero_grad()
         self.d_p_optimizer.zero_grad()
+        # print(pdata.shape,mask.shape)
 
         o, (mu, logvar), ys = self.g(pdata, mask)
 
+        # print(f"painter: {torch.min(o)} {torch.max(o)}",
+        #       f"{torch.min(pdata)} {torch.max(pdata)}{torch.mean(pdata)}{torch.min(mask)} {torch.max(mask)}")
+        # print(torch.max(pdata),torch.min(pdata),torch.max(mask),torch.min(mask),
+        #       torch.max(o),torch.min(o))
         kld_loss = self.kld_loss(mu, logvar) * self.config.KLD_LOSS_WEIGHT
 
         # coarse loss
@@ -187,7 +193,7 @@ class PartPModel(BaseModel):
         # Sketch loss
         g_line_loss = self.line_loss(o,data)
         g_line_loss = g_line_loss * self.config.G1_LINE_LOSS_WEIGHT
-        c_loss += g_line_loss
+        # c_loss += g_line_loss
 
 
         g_color_loss = self.color_loss(o, data)

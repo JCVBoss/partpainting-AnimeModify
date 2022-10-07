@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
 import kornia.filters.laplacian as lineExtracter
-
+import kornia
 # KL Divergence loss used in VAE with an image encoder
 class KLDLoss(nn.Module):
     def forward(self, mu, logvar):
@@ -273,12 +273,31 @@ class SketchLoss(nn.Module):
         self.loss = nn.MSELoss()
         self.lineE = lineExtracter
     def forward(self,x,y):
-        line_x = self.lineE(x,5)
-        line_y = self.lineE(y,5)
+        line_x = self.lineE(x,3, border_type='reflect', normalized=True)
+        line_y = self.lineE(y,3, border_type='reflect', normalized=True)
+        line_x_m = 1.0 * (torch.sum(line_x, dim=1, keepdim=True) > 0.01)
+        line_y_m = 1.0 * (torch.sum(line_y, dim=1, keepdim=True) > 0.01)
+        # print(torch.max(line_x),torch.min(line_x),torch.median(line_x))
+        # print(line_x.shape,line_x_m.shape)
+        line_x = line_x * line_x_m
+        line_y = line_y * line_y_m
 
-        l = self.loss(line_x,line_y)
-        l = torch.sum(l)
-        return l
+        dt_y = line_y
+        # dt_y = (line_y.sum(dim=1,keepdim=True)/3)
+        # b,c,h,w = dt_y.shape
+        # dt_y = dt_y.view(b,c,-1)
+        # # print(dt_y.shape,torch.max(dt_y,dim=-1).values)
+        # dt_y = dt_y/torch.max(dt_y)
+        # # print(dt_y.shape, torch.max(dt_y, dim=-1).values.shape)
+        # dt_y = dt_y.view(b,c,h,w)
+        dt_y[dt_y>0.05] = 1.0
+        dt_y[dt_y<=0.05] = 0.0
+        dt_kornia = kornia.contrib.distance_transform(dt_y, kernel_size=3, h=0.35)
+        dis_loss = line_x * dt_kornia
+        l = self.loss(line_x,line_y) + torch.sum(dis_loss)/10.0
+        # l =
+        # print(l)
+        return l/100
     
 class TVLoss(nn.Module):
     def __init__(self):

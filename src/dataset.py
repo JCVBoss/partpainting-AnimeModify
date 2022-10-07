@@ -144,13 +144,14 @@ class Dataset(torch.utils.data.Dataset):
             mask_idx = random.randint(0,len(self.test_mask)-1)
             mask = imread(self.test_mask[mask_idx])
             if self.datatype == 1:
-                mask = self.resize(mask, self.input_size//2, self.input_size//2)
+                mask = self.resize(mask, self.input_size - self.input_size//8, self.input_size)
                 mask_ = np.zeros([self.input_size, self.input_size],dtype=np.float32)
-                x_left = random.randint(self.input_size//8,self.input_size//4)
-                x_right = (x_left+self.input_size//2)
+                x_left = random.randint(self.input_size//32,3*(self.input_size//32))
+                x_right = (x_left+(self.input_size - self.input_size//8))
                 # print(mask.shape,mask_.shape,np.max(mask))
-                mask_[x_left:x_right,x_left:x_right] = mask
+                mask_[:,x_left:x_right] = mask
                 mask = (mask_/255.0)>0.5
+                # mask = (mask/255.0)>0.5
                 mask = 1 - mask * 1.0
                 # mask = mask_
 
